@@ -80,7 +80,18 @@ class DatabaseManager:
     def _get_connection(self):
         """Get a database connection."""
         if self.use_postgres:
-            conn = psycopg2.connect(DATABASE_URL, sslmode="require")
+            # Strip channel_binding from URL (not supported by psycopg2)
+            # sslmode is already in the URL, don't pass it as kwarg
+            clean_url = DATABASE_URL
+            if "channel_binding" in clean_url:
+                # Remove &channel_binding=require or ?channel_binding=require
+                import re
+                clean_url = re.sub(r'[&?]channel_binding=[^&]*', '', clean_url)
+                # Fix broken query string if channel_binding was the first param
+                clean_url = clean_url.replace('?&', '?')
+                if clean_url.endswith('?'):
+                    clean_url = clean_url[:-1]
+            conn = psycopg2.connect(clean_url)
             return conn
         else:
             conn = sqlite3.connect(self.sqlite_path)
