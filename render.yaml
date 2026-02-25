@@ -1,0 +1,23 @@
+# Render.com deployment configuration
+# Deploy as a Web Service with free tier
+
+services:
+  - type: web
+    name: ap-leadgen-dashboard
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: cd dashboard && gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    envVars:
+      - key: SERPAPI_API_KEY
+        sync: false
+      - key: RAPIDAPI_KEY
+        sync: false
+      - key: GOOGLE_SHEET_ID
+        sync: false
+      - key: GOOGLE_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.11.0

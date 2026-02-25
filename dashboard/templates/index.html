@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AP Lead Gen Dashboard — Rhocash</title>
+    <meta name="description" content="Automated Accounts Payable job posting scraper dashboard">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>⚡</text></svg>">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>⚡ AP Lead Gen Dashboard</h1>
+                <p>Automated Accounts Payable job scraping for Rhocash</p>
+            </div>
+            <div class="header-actions">
+                <div class="status-indicator" id="systemStatus">
+                    <span class="dot"></span>
+                    <span>System Online</span>
+                </div>
+                <a href="#" id="sheetLink" class="btn btn-secondary" target="_blank">📊 Google Sheet</a>
+                <button class="btn btn-primary" id="btnScrapeNow" onclick="triggerScrape()">
+                    🚀 Scrape Now
+                </button>
+            </div>
+        </header>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="icon">📋</div>
+                <div class="value" id="statTotalJobs">—</div>
+                <div class="label">Total Jobs Scraped</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">🏢</div>
+                <div class="value" id="statCompanies">—</div>
+                <div class="label">Unique Companies</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">📅</div>
+                <div class="value" id="statToday">—</div>
+                <div class="label">Added Today</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">🌐</div>
+                <div class="value" id="statSources">—</div>
+                <div class="label">Data Sources</div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content-grid">
+            <!-- Jobs Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Recent Job Postings</h2>
+                    <span id="jobCount" style="color: var(--text-muted); font-size: 13px;"></span>
+                </div>
+                <div class="table-controls">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Search company or title..." oninput="debounceSearch()">
+                    <select class="filter-select" id="sourceFilter" onchange="loadJobs(1)">
+                        <option value="">All Sources</option>
+                    </select>
+                </div>
+                <div style="overflow-x: auto; max-height: 480px; overflow-y: auto;">
+                    <table class="jobs-table">
+                        <thead>
+                            <tr>
+                                <th>Company</th>
+                                <th>Job Title</th>
+                                <th>Source</th>
+                                <th>Scraped</th>
+                                <th>Link</th>
+                            </tr>
+                        </thead>
+                        <tbody id="jobsTableBody">
+                            <tr><td colspan="5" class="empty-state"><div class="loading-spinner"></div> Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-footer">
+                    <span id="paginationInfo">—</span>
+                    <div class="pagination" id="pagination"></div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Sources Breakdown -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Sources Breakdown</h2>
+                    </div>
+                    <div class="card-body" id="sourcesBreakdown">
+                        <div class="empty-state"><div class="loading-spinner"></div></div>
+                    </div>
+                </div>
+
+                <!-- Scheduler Panel -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>⏰ Scheduler</h2>
+                        <span class="status-indicator" id="schedulerStatus" style="font-size: 11px; padding: 4px 10px;">
+                            <span class="dot"></span>
+                            <span id="schedulerLabel">Checking...</span>
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="scrape-options">
+                            <label>Schedule Frequency</label>
+                            <select class="filter-select" id="scheduleFreq" style="width: 100%;">
+                                <option value="daily">Daily</option>
+                                <option value="twice_daily">Twice Daily (6 AM & 6 PM)</option>
+                                <option value="every_6h">Every 6 Hours</option>
+                                <option value="hourly">Every Hour</option>
+                            </select>
+
+                            <label>Run Time (for Daily)</label>
+                            <input type="time" class="search-input" id="scheduleTime" value="06:00" style="width: 100%;">
+
+                            <label>Tiers to Run</label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="schedTier1" checked> Tier 1 (SerpAPI)
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="schedTier2"> Tier 2 (JSearch)
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="schedTier3"> Tier 3 (Niche)
+                                </label>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%;" onclick="saveSchedule()">
+                            💾 Save Schedule
+                        </button>
+                        <div style="margin-top: 12px; display: flex; gap: 8px;">
+                            <button class="btn btn-secondary" style="flex: 1;" onclick="pauseSchedule()">⏸ Pause</button>
+                            <button class="btn btn-secondary" style="flex: 1;" onclick="resumeSchedule()">▶ Resume</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Run Scraper Manually -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>🔧 Manual Run</h2>
+                    </div>
+                    <div class="scrape-panel">
+                        <div class="scrape-options">
+                            <label>Tiers</label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="tier1" checked> Tier 1
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="tier2"> Tier 2
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="tier3"> Tier 3
+                                </label>
+                            </div>
+                            <label>
+                                <input type="checkbox" id="dryRun"> Dry Run (no Sheets write)
+                            </label>
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%;" id="btnRunManual" onclick="triggerScrape()">
+                            🚀 Run Scrape
+                        </button>
+                        <div class="scrape-log" id="scrapeLog" style="display: none;"></div>
+                    </div>
+                </div>
+
+                <!-- System Config -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>System Config</h2>
+                    </div>
+                    <div class="card-body" id="configPanel">
+                        <div class="empty-state"><div class="loading-spinner"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
