@@ -25,12 +25,11 @@ DATABASE_URL = os.getenv("DATABASE_URL", "")
 
 
 def _clean_postgres_url(url: str) -> str:
-    """Remove unsupported params like channel_binding from the connection URL."""
-    if "channel_binding" in url:
-        url = re.sub(r'[&?]channel_binding=[^&]*', '', url)
-        url = url.replace('?&', '?')
-        if url.endswith('?'):
-            url = url[:-1]
+    """Strip all query parameters from the connection URL.
+    psycopg2 handles sslmode via keyword arg instead.
+    This avoids issues with Render URL-encoding & characters."""
+    if '?' in url:
+        url = url.split('?')[0]
     return url
 
 
@@ -102,7 +101,7 @@ class DatabaseManager:
         """Get a database connection."""
         if self.use_postgres:
             clean_url = _clean_postgres_url(DATABASE_URL)
-            conn = psycopg2.connect(clean_url)
+            conn = psycopg2.connect(clean_url, sslmode="require")
             return conn
         else:
             os.makedirs(os.path.dirname(self.sqlite_path) or ".", exist_ok=True)
