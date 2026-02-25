@@ -32,7 +32,7 @@ from scrapers.playwright_scraper import run_niche_scraping
 from processing.normalizer import normalize_jobs
 from processing.deduplicator import Deduplicator
 from processing.us_filter import filter_us_jobs
-from storage.sqlite_db import SQLiteDB
+from storage.database import DatabaseManager
 from storage.google_sheets import GoogleSheetsWriter
 
 # ─── Logging Setup ──────────────────────────────────────────
@@ -174,7 +174,7 @@ def run_pipeline(
 
     # ── Step 4: Deduplicate ──
     logger.info("─── Deduplicating ───")
-    db = SQLiteDB(SQLITE_DB_PATH)
+    db = DatabaseManager(SQLITE_DB_PATH)
     deduper = Deduplicator(db)
     new_jobs = deduper.filter_new_jobs(us_jobs)
     logger.info(f"New unique jobs: {len(new_jobs)} (filtered {len(us_jobs) - len(new_jobs)} duplicates)")

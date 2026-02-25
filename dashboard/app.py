@@ -37,7 +37,12 @@ from config import (
 )
 from storage.database import DatabaseManager
 
-app = Flask(__name__, static_folder="static", template_folder="templates")
+DASHBOARD_DIR = os.path.dirname(os.path.abspath(__file__))
+app = Flask(
+    __name__,
+    static_folder=os.path.join(DASHBOARD_DIR, "static"),
+    template_folder=os.path.join(DASHBOARD_DIR, "templates"),
+)
 
 # Initialize database (auto-selects SQLite or Neon PostgreSQL)
 db = DatabaseManager(os.path.join(PROJECT_ROOT, SQLITE_DB_PATH))
